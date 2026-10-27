@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>LoveSatoru</title>
+<style>
+:root{
+  --bg:#f0f0f5;--topbar-bg:#ffffff;--bottombar-bg:#ffffff;
+  --my-bubble:#d1f0ff;--other-bubble:#ffffff;--text:#1a1a1a;--subtext:#888;
+  --accent:#5b9bd5;--border:#e0e0e0;--shadow:0 2px 12px rgba(0,0,0,0.06);
+  --radius:18px;--font-size:15px;--input-bg:#f5f5f7;--danger:#e05555;
+  --tag-bg:#f0f0f5;--overlay:rgba(0,0,0,0.5);--safe-bottom:env(safe-area-inset-bottom,12px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
+html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);font-size:var(--font-size);display:flex;justify-content:center;align-items:center;-webkit-overflow-scrolling:touch;transition:background 0.4s;}
+body.has-bg{background-size:cover;background-position:center;background-repeat:no-repeat;background-attachment:fixed;}
+#app{width:100%;max-width:500px;height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden;box-shadow:var(--shadow);background:transparent;border-radius:0;}
+@media(min-width:501px){#app{border-radius:20px;height:95%;max-height:900px;}}
+.topbar{display:flex;align-items:center;padding:10px 14px;background:var(--topbar-bg);border-bottom:1px solid var(--border);gap:10px;z-index:10;flex-shrink:0;min-height:56px;transition:background 0.4s;}
+.topbar .avatar-wrap{position:relative;flex-shrink:0;cursor:pointer;}
+.topbar .avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--border);background:#ddd;}
+.topbar .status-dot{position:absolute;bottom:1px;right:1px;width:11px;height:11px;border-radius:50%;border:2px solid #fff;background:#4cd964;}
+.topbar .info{flex:1;min-width:0;cursor:pointer;}
+.topbar .name{font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topbar .status-text{font-size:12px;color:var(--subtext);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topbar .btn-icon{width:34px;height:34px;border-radius:50%;border:none;background:var(--input-bg);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:0.2s;}
+.topbar .btn-icon:active{transform:scale(0.92);opacity:0.7;}
+.chat-area{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;background:transparent;}
+.chat-area::-webkit-scrollbar{display:none;}
+.msg-row{display:flex;flex-direction:column;max-width:82%;animation:fadeInUp 0.25s ease;}
+.msg-row.me{align-self:flex-end;align-items:flex-end;}
+.msg-row.other{align-self:flex-start;align-items:flex-start;}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.msg-bubble{padding:10px 14px;border-radius:var(--radius);word-break:break-word;position:relative;font-size:15px;line-height:1.5;cursor:pointer;transition:0.15s;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
+.msg-row.me .msg-bubble{background:var(--my-bubble);border-bottom-right-radius:6px;}
+.msg-row.other .msg-bubble{background:var(--other-bubble);border-bottom-left-radius:6px;}
+.msg-bubble:active{transform:scale(0.97);}
+.msg-bubble.special-bubble{background:transparent!important;padding:0!important;box-shadow:none!important;}
+.msg-bubble .quote-preview{font-size:12px;color:var(--subtext);border-left:3px solid var(--accent);padding-left:8px;margin-bottom:6px;opacity:0.85;max-height:40px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.msg-bubble img.sticker-msg{max-width:140px;max-height:140px;border-radius:10px;display:block;}
+.msg-time{font-size:11px;color:var(--subtext);margin-top:3px;padding:0 4px;}
+.msg-status{font-size:11px;color:var(--subtext);margin-top:2px;padding:0 4px;}
+.msg-row.pat-row,.msg-row.system-row{align-self:center;max-width:88%;}
+.msg-row.pat-row .msg-bubble,.msg-row.system-row .msg-bubble{background:rgba(0,0,0,0.06)!important;box-shadow:none;font-size:12px;color:#888;text-align:center;padding:6px 14px;border-radius:20px;cursor:default;}
+.msg-row.pat-row .msg-bubble:active,.msg-row.system-row .msg-bubble:active{transform:none;}
+.msg-row.pat-row .msg-time,.msg-row.system-row .msg-time{text-align:center;}
+.typing-indicator{align-self:flex-start;background:var(--other-bubble);padding:12px 16px;border-radius:var(--radius);border-bottom-left-radius:6px;font-size:13px;color:var(--subtext);display:flex;align-items:center;gap:6px;animation:fadeInUp 0.2s ease;}
+.typing-dots{display:flex;gap:3px;}
+.typing-dots span{width:7px;height:7px;border-radius:50%;background:#aaa;animation:bounce 0.7s infinite alternate;}
+.typing-dots span:nth-child(2){animation-delay:0.15s;}
+.typing-dots span:nth-child(3){animation-delay:0.3s;}
+@keyframes bounce{to{transform:translateY(-8px);opacity:0.4;}}
+.bottombar{display:flex;align-items:flex-end;padding:8px 10px;background:var(--bottombar-bg);border-top:1px solid var(--border);gap:6px;z-index:10;flex-shrink:0;padding-bottom:calc(8px + var(--safe-bottom));transition:background 0.4s;flex-wrap:wrap;}
+.bottombar .input-wrap{flex:1;display:flex;align-items:flex-end;background:var(--input-bg);border-radius:22px;padding:4px 6px 4px 14px;gap:4px;min-width:0;}
+.bottombar textarea{flex:1;border:none;background:transparent;resize:none;font-size:15px;line-height:1.4;max-height:100px;min-height:34px;padding:6px 0;outline:none;font-family:inherit;color:var(--text);-webkit-user-select:text;user-select:text;}
+.bottombar .btn-sm{width:34px;height:34px;border-radius:50%;border:none;background:transparent;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:0.2s;}
+.bottombar .btn-sm:active{transform:scale(0.88);opacity:0.6;}
+.bottombar .btn-send{width:40px;height:40px;border-radius:50%;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:18px;flex-shrink:0;transition:0.2s;display:flex;align-items:center;justify-content:center;}
+.bottombar .btn-send:active{transform:scale(0.88);opacity:0.7;}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--overlay);z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn 0.2s ease;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.panel{background:#fff;width:100%;max-width:500px;max-height:85vh;border-radius:20px 20px 0 0;overflow-y:auto;padding:20px 16px;padding-bottom:calc(20px + var(--safe-bottom));animation:slideUp 0.3s ease;z-index:51;position:relative;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.panel h3{font-size:17px;margin-bottom:14px;text-align:center;font-weight:700;}
+.panel .close-btn{position:absolute;top:12px;right:16px;width:32px;height:32px;border-radius:50%;border:none;background:#eee;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;z-index:2;}
+.panel label{font-size:13px;font-weight:600;display:block;margin:10px 0 4px;color:#555;}
+.panel input[type="text"],.panel input[type="number"],.panel input[type="file"],.panel textarea,.panel select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);font-size:14px;font-family:inherit;background:#fafafa;-webkit-user-select:text;user-select:text;}
+.panel textarea{min-height:80px;resize:vertical;}
+.panel .btn{display:inline-block;padding:10px 18px;border-radius:20px;border:none;cursor:pointer;font-size:14px;font-weight:600;margin:4px;transition:0.2s;}
+.panel .btn:active{transform:scale(0.94);opacity:0.75;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-outline{background:#fff;border:2px solid var(--accent);color:var(--accent);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-smaller{padding:6px 12px;font-size:12px;border-radius:14px;}
+.slider-group{display:flex;align-items:center;gap:10px;margin:6px 0;}
+.slider-group input[type="range"]{flex:1;accent-color:var(--accent);height:6px;}
+.slider-group .val{font-weight:700;font-size:14px;min-width:55px;text-align:right;color:var(--accent);}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;}
+.chip{padding:7px 14px;border-radius:16px;font-size:13px;background:var(--tag-bg);cursor:pointer;border:1.5px solid transparent;transition:0.2s;white-space:nowrap;}
+.chip.active{border-color:var(--accent);background:#e8f2fc;font-weight:600;}
+.wordcard-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:10px;background:#f9f9f9;margin:3px 0;font-size:13px;gap:8px;}
+.group-toggle{padding:4px 10px;border-radius:14px;font-size:12px;border:1.5px solid #ccc;background:#fff;cursor:pointer;}
+.group-toggle.on{border-color:var(--accent);background:#e8f2fc;color:var(--accent);font-weight:700;}
+.reply-quote-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:#f0f0f5;border-radius:10px;font-size:12px;color:var(--subtext);margin:0 10px 4px;flex-shrink:0;}
+.reply-quote-bar .cancel-quote{cursor:pointer;font-weight:700;color:var(--danger);font-size:16px;padding:0 4px;}
+.sticker-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:220px;overflow-y:auto;padding:4px;}
+.sticker-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;cursor:pointer;border:2px solid transparent;transition:0.15s;}
+.sticker-grid img:active{border-color:var(--accent);transform:scale(0.9);}
+.add-sticker-btn{aspect-ratio:1;border-radius:10px;border:2px dashed #ccc;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:28px;color:#aaa;background:#fafafa;}
+.pat-item{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:10px;background:#f9f9f9;margin:3px 0;font-size:13px;}
+.pat-item .pat-text{flex:1;color:#666;}
+
+.fab{position:absolute;right:16px;bottom:calc(80px + var(--safe-bottom));width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:26px;box-shadow:0 4px 16px rgba(91,155,213,0.45);z-index:20;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s;line-height:1;}
+.fab:active{transform:scale(0.9);}
+.fab-menu{position:absolute;right:16px;bottom:calc(140px + var(--safe-bottom));background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.18);z-index:21;padding:8px;display:flex;flex-direction:column;gap:2px;animation:fadeIn 0.15s ease;min-width:160px;}
+.fab-menu button{padding:11px 16px;border:none;background:none;border-radius:10px;font-size:14px;text-align:left;cursor:pointer;font-family:inherit;color:var(--text);display:flex;align-items:center;gap:10px;transition:0.15s;}
+.fab-menu button:active{background:#f0f0f5;}
+
+.rp-card{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#ff9a3c,#ff6a00);color:#fff;padding:12px 14px;border-radius:14px;min-width:210px;max-width:260px;cursor:pointer;position:relative;transition:0.15s;box-shadow:0 2px 10px rgba(255,106,0,0.25);}
+.rp-card.transfer{background:linear-gradient(135deg,#5b9bd5,#3a7bd5);box-shadow:0 2px 10px rgba(91,155,213,0.25);}
+.rp-card.resolved{opacity:0.6;filter:grayscale(0.3);cursor:default;}
+.rp-card:active{transform:scale(0.97);}
+.rp-card.resolved:active{transform:none;}
+.rp-card .rp-icon{font-size:28px;flex-shrink:0;}
+.rp-card .rp-info{flex:1;min-width:0;}
+.rp-card .rp-note{font-size:13px;font-weight:500;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0.95;}
+.rp-card .rp-amount{font-size:17px;font-weight:700;}
+.rp-card .rp-status{font-size:11px;opacity:0.9;flex-shrink:0;background:rgba(255,255,255,0.2);padding:3px 8px;border-radius:10px;}
+
+.survey-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 14px;min-width:210px;max-width:260px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.06);transition:0.15s;}
+.survey-card:active{transform:scale(0.97);}
+.survey-card .sv-title{font-weight:600;font-size:14px;margin-bottom:4px;color:var(--text);}
+.survey-card .sv-sub{font-size:12px;color:var(--subtext);margin-bottom:6px;}
+.survey-card .sv-countdown{font-size:14px;color:var(--accent);font-weight:700;letter-spacing:0.5px;}
+.survey-card .sv-status{font-size:12px;color:#4cd964;font-weight:600;}
+
+.diary-item{background:#f9f9f9;border-radius:12px;padding:12px;margin-bottom:8px;border-left:3px solid var(--accent);}
+.diary-item .diary-content{font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;color:#333;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="avatar-wrap" id="avatarWrap">
+      <img class="avatar" id="otherAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e0e0e0'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%23bbb'/%3E%3Cellipse cx='50' cy='78' rx='30' ry='22' fill='%23bbb'/%3E%3C/svg%3E" alt="avatar">
+      <div class="status-dot"></div>
+    </div>
+    <div class="info" id="infoArea">
+      <div class="name" id="otherName">Satoru</div>
+      <div class="status-text" id="otherStatus">在线</div>
+    </div>
+    <button class="btn-icon" id="btnSettings" title="设置">⚙️</button>
+    <button class="btn-icon" id="btnWordCards" title="字卡">🃏</button>
+  </div>
+  <div class="chat-area" id="chatArea"></div>
+  <div class="reply-quote-bar" id="quoteBar" style="display:none;">
+    <span id="quotePreview">引用: ...</span>
+    <span class="cancel-quote" id="cancelQuote">✕</span>
+  </div>
+  <div class="bottombar">
+    <button class="btn-sm" id="btnEmoji" title="表情包">😊</button>
+    <div class="input-wrap">
+      <textarea id="msgInput" rows="1" placeholder="输入消息..."></textarea>
+    </div>
+    <button class="btn-send" id="btnSend">➤</button>
+  </div>
+
+  <button class="fab" id="fabBtn">＋</button>
+  <div class="fab-menu" id="fabMenu" style="display:none;">
+    <button data-action="diary">📖 <span>日记本</span></button>
+    <button data-action="rp">🧧 <span>红包 / 转账</span></button>
+    <button data-action="survey">📋 <span>问卷</span></button>
+  </div>
+</div>
+<div id="overlayContainer"></div>
+<input type="file" id="hiddenFileInput" style="display:none" accept="image/*">
+<input type="file" id="hiddenJsonInput" style="display:none" accept=".json,application/json">
+<input type="file" id="hiddenBgInput" style="display:none" accept="image/*">
+<input type="file" id="hiddenEmojiInput" style="display:none" accept="image/*" multiple>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= IndexedDB ================= */
+const DB_NAME='LoveSatoruDB';
+const DB_VERSION=6;
+let db=null;
+
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(DB_NAME,DB_VERSION);
+    req.onupgradeneeded=(e)=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('settings')) d.createObjectStore('settings',{keyPath:'key'});
+      if(!d.objectStoreNames.contains('messages')) d.createObjectStore('messages',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('wordCardGroups')) d.createObjectStore('wordCardGroups',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('userStickers')) d.createObjectStore('userStickers',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('otherStickers')) d.createObjectStore('otherStickers',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('diaries')) d.createObjectStore('diaries',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('surveys')) d.createObjectStore('surveys',{keyPath:'id',autoIncrement:true});
+    };
+    req.onsuccess=(e)=>{db=e.target.result;resolve(db);};
+    req.onerror=(e)=>reject(e.target.error);
+  });
+}
+function dbPut(store,data){return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');const req=tx.objectStore(store).put(data);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
+function dbGetAll(store){return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readonly');const req=tx.objectStore(store).getAll();req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
+function dbGet(store,key){return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readonly');const req=tx.objectStore(store).get(key);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
+function dbDelete(store,key){return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');const req=tx.objectStore(store).delete(key);req.onsuccess=()=>resolve();req.onerror=()=>reject(req.error);});}
+function dbClear(store){return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');const req=tx.objectStore(store).clear();req.onsuccess=()=>resolve();req.onerror=()=>reject(req.error);});}
+
+/* ================= State ================= */
+const state={
+  otherName:'Satoru',
+  otherStatus:'在线',
+  statusWords:['在线','忙碌','离开','睡觉中','工作中','想你了','emo中','充电中'],
+  myAvatar:null,
+  otherAvatar:null,
+  minReplySec:2,
+  maxReplySec:15,
+  activeWordCardGroupIds:[],
+  replyCountMin:1,
+  replyCountMax:3,
+  patList:[],
+  bgImage:null,
+  topbarColor:'#ffffff',
+  bottombarColor:'#ffffff',
+  myDiaryBookName:'我的日记本',
+  otherDiaryBookName:'TA的日记本',
+  nextOtherDiaryAt:0
+};
+
+async function loadSettings(){
+  const all=await dbGetAll('settings');
+  for(const s of all){ if(s.key in state) state[s.key]=s.value; }
+  if(state.activeWordCardGroupId && (!state.activeWordCardGroupIds||!state.activeWordCardGroupIds.length)){
+    state.activeWordCardGroupIds=[state.activeWordCardGroupId];
+  }
+  if(!Array.isArray(state.activeWordCardGroupIds)) state.activeWordCardGroupIds=[];
+  if(!Array.isArray(state.patList)) state.patList=[];
+  applySkin();
+}
+async function saveSetting(key,value){
+  state[key]=value;
+  await dbPut('settings',{key,value});
+  if(['bgImage','topbarColor','bottombarColor'].includes(key)) applySkin();
+}
+function applySkin(){
+  const hasBg=state.bgImage && String(state.bgImage).startsWith('data:');
+  document.body.style.backgroundImage=hasBg?`url(${state.bgImage})`:'';
+  document.body.classList.toggle('has-bg',!!hasBg);
+  document.querySelector('.topbar').style.background=state.topbarColor||'#ffffff';
+  document.querySelector('.bottombar').style.background=state.bottombarColor||'#ffffff';
+  document.documentElement.style.setProperty('--topbar-bg',state.topbarColor||'#ffffff');
+  document.documentElement.style.setProperty('--bottombar-bg',state.bottombarColor||'#ffffff');
+}
+
+/* ================= DOM ================= */
+const chatArea=document.getElementById('chatArea');
+const msgInput=document.getElementById('msgInput');
+const btnSend=document.getElementById('btnSend');
+const btnEmoji=document.getElementById('btnEmoji');
+const btnSettings=document.getElementById('btnSettings');
+const btnWordCards=document.getElementById('btnWordCards');
+const overlayContainer=document.getElementById('overlayContainer');
+const quoteBar=document.getElementById('quoteBar');
+const quotePreview=document.getElementById('quotePreview');
+const cancelQuote=document.getElementById('cancelQuote');
+const otherAvatarImg=document.getElementById('otherAvatar');
+const otherNameEl=document.getElementById('otherName');
+const otherStatusEl=document.getElementById('otherStatus');
+const hiddenFileInput=document.getElementById('hiddenFileInput');
+const hiddenJsonInput=document.getElementById('hiddenJsonInput');
+const hiddenBgInput=document.getElementById('hiddenBgInput');
+const hiddenEmojiInput=document.getElementById('hiddenEmojiInput');
+
+/* ================= Runtime ================= */
+let pendingReplyCount=0;
+let pendingReplyTimer=null;
+let typingIndicatorEl=null;
+let isTyping=false;
+let fileCallback=null;
+let bgCallback=null;
+let emojiCallback=null;
+let statusChangeTimer=null;
+let diaryTimer=null;
+const scheduledSurveys=new Set();
+
+/* ================= Utils ================= */
+function formatTime(ts){
+  const d=new Date(ts),n=new Date();
+  const pad=x=>String(x).padStart(2,'0');
+  const t=`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  if(d.toDateString()===n.toDateString()) return t;
+  return `${pad(d.getMonth()+1)}/${pad(d.getDate())} ${t}`;
+}
+function scrollToBottom(){ requestAnimationFrame(()=>{chatArea.scrollTop=chatArea.scrollHeight;}); }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function readFileAsDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+
+/* ================= Messages ================= */
+async function loadMessages(){
+  await checkPendingRps();
+  chatArea.innerHTML='';
+  const msgs=await dbGetAll('messages');
+  msgs.sort((a,b)=>a.timestamp-b.timestamp);
+  for(const m of msgs) appendMsgToDOM(m,false);
+  scrollToBottom();
+  updateOtherUI();
+}
+
+function appendMsgToDOM(msg,animate=true){
+  const row=document.createElement('div');
+  row.className=`msg-row ${msg.sender==='me'?'me':'other'}`;
+  if(msg.type==='pat'||msg.type==='system') row.classList.add('pat-row','system-row');
+  row.dataset.msgId=msg.id;
+
+  const bubble=document.createElement('div');
+  bubble.className='msg-bubble';
+
+  if(msg.quoteId && msg.quotePreview){
+    const qp=document.createElement('div');
+    qp.className='quote-preview';
+    qp.textContent='引用: '+msg.quotePreview;
+    bubble.appendChild(qp);
+  }
+
+  if(msg.type==='sticker'){
+    const img=document.createElement('img');
+    img.className='sticker-msg';
+    img.src=msg.content;
+    bubble.appendChild(img);
+  }else if(msg.type==='pat'||msg.type==='system'){
+    bubble.textContent=msg.content;
+  }else if(msg.type==='redpacket'||msg.type==='transfer'){
+    bubble.classList.add('special-bubble');
+    bubble.appendChild(buildRpCard(msg));
+  }else if(msg.type==='survey'){
+    bubble.classList.add('special-bubble');
+    bubble.appendChild(buildSurveyCard(msg));
+  }else{
+    bubble.textContent=msg.content;
+  }
+
+  row.appendChild(bubble);
+
+  const timeDiv=document.createElement('div');
+  timeDiv.className='msg-time';
+  timeDiv.textContent=formatTime(msg.timestamp);
+  row.appendChild(timeDiv);
+
+  if(msg.sender==='me' && msg.status && !['pat','system','redpacket','transfer','survey'].includes(msg.type)){
+    const st=document.createElement('div');
+    st.className='msg-status';
+    st.textContent=msg.status==='read'?'已读':'已发送';
+    row.appendChild(st);
+  }
+
+  if(!['pat','system','redpacket','transfer','survey'].includes(msg.type)){
+    row.addEventListener('click',(e)=>{ e.stopPropagation(); showMsgMenu(row,msg); });
+  }
+  if(!animate) row.style.animation='none';
+  chatArea.appendChild(row);
+}
+
+function updateMsgStatus(msgId,status){
+  const row=chatArea.querySelector(`[data-msg-id="${msgId}"]`);
+  if(!row) return;
+  if(row.querySelector('.rp-card')||row.querySelector('.survey-card')) return;
+  let st=row.querySelector('.msg-status');
+  if(!st){ st=document.createElement('div'); st.className='msg-status'; row.appendChild(st); }
+  st.textContent=status==='read'?'已读':'已发送';
+}
+
+async function addMessage(sender,content,type='text',quoteId=null,quotePreview=null){
+  const msg={sender,content,type,timestamp:Date.now(),
+    status:sender==='me'?'sent':undefined,
+    quoteId:quoteId||null, quotePreview:quotePreview||null};
+  const id=await dbPut('messages',msg);
+  msg.id=id;
+  appendMsgToDOM(msg,true);
+  scrollToBottom();
+  return msg;
+}
+
+async function getQuotePreview(msgId){
+  const all=await dbGetAll('messages');
+  const m=all.find(x=>x.id===msgId);
+  if(!m) return '';
+  if(m.type==='sticker') return '[表情包]';
+  if(m.type==='pat') return '[拍了拍]';
+  if(m.type==='system') return '[系统提示]';
+  if(m.type==='redpacket') return '[红包]';
+  if(m.type==='transfer') return '[转账]';
+  if(m.type==='survey') return '[问卷]';
+  return (m.content||'').slice(0,30);
+}
+
+/* ================= Message Action Menu ================= */
+function showMsgMenu(row,msg){
+  const old=document.querySelector('.msg-action-menu');
+  if(old) old.remove();
+  const menu=document.createElement('div');
+  menu.className='msg-action-menu';
+  Object.assign(menu.style,{position:'absolute',background:'#fff',borderRadius:'12px',
+    boxShadow:'0 8px 30px rgba(0,0,0,0.18)',zIndex:'30',padding:'6px 0',minWidth:'130px',
+    animation:'fadeIn 0.15s ease'});
+  const rect=row.getBoundingClientRect();
+  const appRect=document.getElementById('app').getBoundingClientRect();
+  menu.style.top=Math.min(rect.top-appRect.top-10,appRect.height-160)+'px';
+  let left=msg.sender==='me'?(rect.right-appRect.left-140):(rect.left-appRect.left);
+  if(left<5) left=5;
+  menu.style.left=left+'px';
+
+  const quoteBtn=document.createElement('button');
+  quoteBtn.textContent='💬 引用回复';
+  quoteBtn.style.cssText='display:block;width:100%;padding:10px 16px;border:none;background:none;font-size:14px;text-align:left;cursor:pointer;color:#333;';
+  quoteBtn.onclick=async()=>{
+    state.quoteMsgId=msg.id;
+    const prev=await getQuotePreview(msg.id);
+    quotePreview.textContent='引用: '+prev;
+    quoteBar.style.display='flex';
+    menu.remove();
+    msgInput.focus();
+  };
+  menu.appendChild(quoteBtn);
+
+  const delBtn=document.createElement('button');
+  delBtn.textContent='🗑 删除此消息';
+  delBtn.style.cssText='display:block;width:100%;padding:10px 16px;border:none;background:none;font-size:14px;text-align:left;cursor:pointer;color:#e05555;';
+  delBtn.onclick=async()=>{
+    await dbDelete('messages',msg.id);
+    row.remove();
+    menu.remove();
+  };
+  menu.appendChild(delBtn);
+
+  document.getElementById('app').appendChild(menu);
+  const close=(e)=>{ if(!menu.contains(e.target)&&e.target!==row&&!row.contains(e.target)){ menu.remove(); document.removeEventListener('click',close); document.removeEventListener('touchstart',close);} };
+  setTimeout(()=>{ document.addEventListener('click',close); document.addEventListener('touchstart',close); },50);
+}
+
+/* ================= Reply Flow ================= */
+async function handleUserMessage(msg){
+  pendingReplyCount++;
+  const readDelay=300+Math.random()*700;
+  setTimeout(async()=>{
+    updateMsgStatus(msg.id,'read');
+    const all=await dbGetAll('messages');
+    const found=all.find(m=>m.id===msg.id);
+    if(found && found.status!=='read'){ found.status='read'; await dbPut('messages',found); }
+    pendingReplyCount--;
+    if(pendingReplyCount<=0){
+      pendingReplyCount=0;
+      if(!isTyping) showTyping();
+      resetReplyTimer();
+    }
+  },readDelay);
+}
+
+function resetReplyTimer(){
+  if(pendingReplyTimer) clearTimeout(pendingReplyTimer);
+  const minSec=Math.max(0,Math.min(120,state.minReplySec||2));
+  const maxSec=Math.max(minSec,Math.min(300,state.maxReplySec||15));
+  const delay=(minSec+Math.random()*(maxSec-minSec))*1000;
+  pendingReplyTimer=setTimeout(executeReply,delay);
+}
+
+async function executeReply(){
+  if(pendingReplyCount>0) return;
+  hideTyping();
+  const pool=await buildReplyPool();
+  if(pool.length===0){
+    await addMessage('other','嗯嗯~','text');
+    scrollToBottom();
+    return;
+  }
+  let minC=Math.max(1,Math.min(10,state.replyCountMin||1));
+  let maxC=Math.max(1,Math.min(10,state.replyCountMax||3));
+  if(minC>maxC) maxC=minC;
+  const count=Math.floor(Math.random()*(maxC-minC+1))+minC;
+  const chosen=[]; const temp=[...pool];
+  for(let i=0;i<count&&temp.length>0;i++){
+    const idx=Math.floor(Math.random()*temp.length);
+    chosen.push(temp.splice(idx,1)[0]);
+  }
+  let rpSent=false;
+  for(let i=0;i<chosen.length;i++){
+    const it=chosen[i];
+    if(!rpSent && Math.random()<0.14){
+      rpSent=true;
+      await sendRpFromOther();
+      await sleep(500+Math.random()*1000);
+    }
+    await addMessage('other',it.content,it.type);
+    scrollToBottom();
+    if(i<chosen.length-1) await sleep(700+Math.random()*1500);
+  }
+}
+
+async function buildReplyPool(){
+  const pool=[];
+  const gids=state.activeWordCardGroupIds||[];
+  if(gids.length>0){
+    for(const gid of gids){
+      const g=await dbGet('wordCardGroups',gid);
+      if(g&&g.cards) g.cards.forEach(c=>pool.push({type:'text',content:c}));
+    }
+  }else{
+    const allG=await dbGetAll('wordCardGroups');
+    const set=new Set();
+    allG.forEach(g=>g.cards&&g.cards.forEach(c=>set.add(c)));
+    set.forEach(c=>pool.push({type:'text',content:c}));
+  }
+  const stickers=await dbGetAll('otherStickers');
+  stickers.forEach(s=>pool.push({type:'sticker',content:s.dataUrl}));
+  (state.patList||[]).forEach(p=>{
+    const txt=[p.name,p.action,p.target].filter(Boolean).join(' ');
+    if(txt) pool.push({type:'pat',content:txt});
+  });
+  return pool;
+}
+
+function showTyping(){
+  if(isTyping) return;
+  isTyping=true;
+  typingIndicatorEl=document.createElement('div');
+  typingIndicatorEl.className='typing-indicator';
+  typingIndicatorEl.innerHTML='对方输入中 <span class="typing-dots"><span></span><span></span><span></span></span>';
+  chatArea.appendChild(typingIndicatorEl);
+  scrollToBottom();
+}
+function hideTyping(){
+  isTyping=false;
+  if(typingIndicatorEl&&typingIndicatorEl.parentNode) typingIndicatorEl.parentNode.removeChild(typingIndicatorEl);
+  typingIndicatorEl=null;
+}
+
+/* ================= Status Randomizer ================= */
+function startStatusRandomizer(){
+  if(statusChangeTimer) clearTimeout(statusChangeTimer);
+  const tick=async()=>{
+    if(state.statusWords.length>0){
+      const ns=state.statusWords[Math.floor(Math.random()*state.statusWords.length)];
+      if(ns!==state.otherStatus){
+        state.otherStatus=ns;
+        await saveSetting('otherStatus',ns);
+        otherStatusEl.textContent=ns;
+      }
+    }
+    const next=(10+Math.random()*50)*60*1000;
+    statusChangeTimer=setTimeout(tick,next);
+  };
+  statusChangeTimer=setTimeout(tick,10000);
+}
+
+/* ================= Panels ================= */
+function openPanel(html){
+  overlayContainer.innerHTML='';
+  const overlay=document.createElement('div');
+  overlay.className='overlay';
+  const panel=document.createElement('div');
+  panel.className='panel';
+  panel.innerHTML=html;
+  overlay.appendChild(panel);
+  overlay.addEventListener('click',(e)=>{ if(e.target===overlay) closePanel(); });
+  overlayContainer.appendChild(overlay);
+  panel.querySelector('.close-btn')?.addEventListener('click',closePanel);
+}
+function closePanel(){ overlayContainer.innerHTML=''; }
+
+/* ---------- 设置面板 ---------- */
+function openSettingsPanel(){
+  const minSec=state.minReplySec||2;
+  const maxSec=state.maxReplySec||15;
+  const rMin=state.replyCountMin||1;
+  const rMax=state.replyCountMax||3;
+  const html=`
+  <button class="close-btn">✕</button>
+  <h3>⚙️ 设置</h3>
+  <label>对方名字</label>
+  <input type="text" id="setOtherName" value="${escHtml(state.otherName)}">
+  <label>对方状态</label>
+  <select id="setOtherStatus">${state.statusWords.map(w=>`<option ${w===state.otherStatus?'selected':''}>${escHtml(w)}</option>`).join('')}</select>
+  <label>状态词管理（状态会随机切换）</label>
+  <div class="chip-row" id="statusChips">${state.statusWords.map((w,i)=>`<span class="chip">${escHtml(w)}<small style="color:#e05555;cursor:pointer;margin-left:4px;" data-delidx="${i}">×</small></span>`).join('')}</div>
+  <input type="text" id="newStatusWord" placeholder="新状态词" style="width:68%">
+  <button class="btn btn-smaller btn-primary" id="addStatusWord">+ 添加</button>
+
+  <label>最快回复时长(秒) <span id="minVal">${minSec}</span>s</label>
+  <div class="slider-group"><input type="range" id="minReplySlider" min="0" max="120" value="${minSec}" step="1"><span class="val" id="minValV">${minSec}s</span></div>
+  <label>最慢回复时长(秒) <span id="maxVal">${maxSec}</span>s</label>
+  <div class="slider-group"><input type="range" id="maxReplySlider" min="0" max="300" value="${maxSec}" step="1"><span class="val" id="maxValV">${maxSec}s</span></div>
+
+  <label>回复条数最少 <span id="rcMinV">${rMin}</span> 条</label>
+  <div class="slider-group"><input type="range" id="rcMinSlider" min="1" max="10" value="${rMin}" step="1"><span class="val" id="rcMinV2">${rMin}条</span></div>
+  <label>回复条数最多 <span id="rcMaxV">${rMax}</span> 条</label>
+  <div class="slider-group"><input type="range" id="rcMaxSlider" min="1" max="10" value="${rMax}" step="1"><span class="val" id="rcMaxV2">${rMax}条</span></div>
+
+  <label>顶栏颜色</label><input type="color" id="topbarColorInput" value="${state.topbarColor||'#ffffff'}">
+  <label>底栏颜色</label><input type="color" id="bottombarColorInput" value="${state.bottombarColor||'#ffffff'}">
+  <label>背景图</label>
+  <button class="btn btn-outline btn-smaller" id="btnPickBg">📷 选择</button>
+  <button class="btn btn-smaller btn-danger" id="btnClearBg">清除</button>
+
+  <hr>
+  <label>对方头像</label><button class="btn btn-outline btn-smaller" id="btnOtherAvatar">📷 选择</button>
+  <label>我的头像</label><button class="btn btn-outline btn-smaller" id="btnMyAvatar">📷 选择</button>
+
+  <hr>
+  <button class="btn btn-primary" id="btnExportAll">📤 导出全部数据</button>
+  <button class="btn btn-outline" id="btnImportAll">📥 导入全部数据</button>
+  <button class="btn btn-danger btn-smaller" id="btnClearAll">⚠️ 清除所有数据</button>
+  `;
+  openPanel(html);
+  bindSettingsEvents();
+}
+
+function bindSettingsEvents(){
+  const minSlider=document.getElementById('minReplySlider');
+  const maxSlider=document.getElementById('maxReplySlider');
+  const rcMin=document.getElementById('rcMinSlider');
+  const rcMax=document.getElementById('rcMaxSlider');
+  if(!minSlider||!maxSlider||!rcMin||!rcMax) return;
+
+  minSlider.oninput=function(){
+    document.getElementById('minVal').textContent=this.value;
+    document.getElementById('minValV').textContent=this.value+'s';
+    if(+maxSlider.value<+this.value){
+      maxSlider.value=this.value;
+      document.getElementById('maxVal').textContent=this.value;
+      document.getElementById('maxValV').textContent=this.value+'s';
+    }
+  };
+  maxSlider.oninput=function(){
+    document.getElementById('maxVal').textContent=this.value;
+    document.getElementById('maxValV').textContent=this.value+'s';
+    if(+minSlider.value>+this.value){
+      minSlider.value=this.value;
+      document.getElementById('minVal').textContent=this.value;
+      document.getElementById('minValV').textContent=this.value+'s';
+    }
+  };
+  rcMin.oninput=function(){
+    document.getElementById('rcMinV').textContent=this.value;
+    document.getElementById('rcMinV2').textContent=this.value+'条';
+    if(+rcMax.value<+this.value){
+      rcMax.value=this.value;
+      document.getElementById('rcMaxV').textContent=this.value;
+      document.getElementById('rcMaxV2').textContent=this.value+'条';
+    }
+  };
+  rcMax.oninput=function(){
+    document.getElementById('rcMaxV').textContent=this.value;
+    document.getElementById('rcMaxV2').textContent=this.value+'条';
+    if(+rcMin.value>+this.value){
+      rcMin.value=this.value;
+      document.getElementById('rcMinV').textContent=this.value;
+      document.getElementById('rcMinV2').textContent=this.value+'条';
+    }
+  };
+  const saveReply=async()=>{
+    state.minReplySec=+minSlider.value;
+    state.maxReplySec=+maxSlider.value;
+    state.replyCountMin=+rcMin.value;
+    state.replyCountMax=+rcMax.value;
+    await saveSetting('minReplySec',state.minReplySec);
+    await saveSetting('maxReplySec',state.maxReplySec);
+    await saveSetting('replyCountMin',state.replyCountMin);
+    await saveSetting('replyCountMax',state.replyCountMax);
+  };
+  minSlider.onchange=saveReply;
+  maxSlider.onchange=saveReply;
+  rcMin.onchange=saveReply;
+  rcMax.onchange=saveReply;
+
+  const nameInput=document.getElementById('setOtherName');
+  if(nameInput){
+    nameInput.oninput=async function(){
+      state.otherName=this.value;
+      otherNameEl.textContent=this.value;
+      await saveSetting('otherName',this.value);
+    };
+  }
+
+  const statusSelect=document.getElementById('setOtherStatus');
+  if(statusSelect){
+    statusSelect.onchange=async function(){
+      state.otherStatus=this.value;
+      await saveSetting('otherStatus',this.value);
+      otherStatusEl.textContent=this.value;
+    };
+  }
+
+  document.getElementById('addStatusWord').onclick=async()=>{
+    const inp=document.getElementById('newStatusWord');
+    const w=inp.value.trim();
+    if(w && !state.statusWords.includes(w)){
+      state.statusWords.push(w);
+      await saveSetting('statusWords',state.statusWords);
+      closePanel(); openSettingsPanel();
+    }
+    inp.value='';
+  };
+  document.getElementById('statusChips').onclick=async(e)=>{
+    const idx=e.target.dataset.delidx;
+    if(idx!==undefined){
+      state.statusWords.splice(+idx,1);
+      await saveSetting('statusWords',state.statusWords);
+      closePanel(); openSettingsPanel();
+    }
+  };
+  document.getElementById('topbarColorInput').oninput=async function(){ await saveSetting('topbarColor',this.value); };
+  document.getElementById('bottombarColorInput').oninput=async function(){ await saveSetting('bottombarColor',this.value); };
+  document.getElementById('btnPickBg').onclick=()=>{
+    bgCallback=async(url)=>{ await saveSetting('bgImage',url); closePanel(); openSettingsPanel(); };
+    hiddenBgInput.click();
+  };
+  document.getElementById('btnClearBg').onclick=async()=>{
+    await saveSetting('bgImage',null); closePanel(); openSettingsPanel();
+  };
+  document.getElementById('btnOtherAvatar').onclick=()=>{
+    fileCallback=async(url)=>{ state.otherAvatar=url; await saveSetting('otherAvatar',url); updateOtherUI(); closePanel(); openSettingsPanel(); };
+    hiddenFileInput.click();
+  };
+  document.getElementById('btnMyAvatar').onclick=()=>{
+    fileCallback=async(url)=>{ state.myAvatar=url; await saveSetting('myAvatar',url); closePanel(); openSettingsPanel(); };
+    hiddenFileInput.click();
+  };
+  document.getElementById('btnExportAll').onclick=exportAll;
+  document.getElementById('btnImportAll').onclick=()=>hiddenJsonInput.click();
+  document.getElementById('btnClearAll').onclick=async()=>{
+    if(!confirm('确定清除所有数据？此操作不可恢复！')) return;
+    await dbClear('messages'); await dbClear('settings');
+    await dbClear('wordCardGroups'); await dbClear('userStickers'); await dbClear('otherStickers');
+    await dbClear('diaries'); await dbClear('surveys');
+    state.bgImage=null; state.otherAvatar=null; state.myAvatar=null;
+    state.topbarColor='#ffffff'; state.bottombarColor='#ffffff';
+    state.otherName='Satoru'; state.otherStatus='在线';
+    state.statusWords=['在线','忙碌','离开','睡觉中','工作中','想你了','emo中','充电中'];
+    state.minReplySec=2; state.maxReplySec=15;
+    state.replyCountMin=1; state.replyCountMax=3;
+    state.activeWordCardGroupIds=[]; state.patList=[];
+    state.myDiaryBookName='我的日记本'; state.otherDiaryBookName='TA的日记本';
+    state.nextOtherDiaryAt=0;
+    applySkin(); await loadMessages(); updateOtherUI(); closePanel();
+  };
+}
+
+/* ---------- 字卡面板 ---------- */
+async function openWordCardsPanel(){
+  const groups=await dbGetAll('wordCardGroups');
+  const activeIds=state.activeWordCardGroupIds||[];
+  let groupsHtml='';
+  for(const g of groups){
+    const on=activeIds.includes(g.id);
+    groupsHtml+=`<div class="wordcard-item" style="${on?'border:2px solid var(--accent);background:#e8f2fc;':''}">
+      <span style="flex:1;">${escHtml(g.name||'未命名')} <small style="color:#999;">(${g.cards?g.cards.length:0})</small></span>
+      <button class="group-toggle ${on?'on':''}" data-gid="${g.id}">${on?'✅ 生效中':'启用'}</button>
+      <button class="btn btn-smaller btn-danger delGroupBtn" data-gid="${g.id}">删</button>
+    </div>`;
+  }
+  const html=`
+  <button class="close-btn">✕</button>
+  <h3>🃏 字卡板块</h3>
+  <p style="font-size:12px;color:#999;text-align:center;margin-bottom:8px;">可同时启用多个分组（点击「启用」切换）</p>
+  <div style="max-height:180px;overflow-y:auto;">${groupsHtml||'<p style="color:#999;">暂无分组</p>'}</div>
+
+  <label>新建分组</label>
+  <input type="text" id="newGroupName" placeholder="分组名称">
+  <button class="btn btn-primary btn-smaller" id="btnCreateGroup">创建</button>
+
+  <hr>
+  <label>批量导入到当前选中分组（换行分隔，一行一条）</label>
+  <select id="importTargetGroup">${groups.map(g=>`<option value="${g.id}">${escHtml(g.name||'未命名')}</option>`).join('')}</select>
+  <textarea id="batchCardsInput" placeholder="内容1&#10;内容2&#10;内容3..." style="margin-top:6px;"></textarea>
+  <button class="btn btn-primary btn-smaller" id="btnBatchImport">批量导入（自动查重）</button>
+  <button class="btn btn-outline btn-smaller" id="btnJsonImport">📄 从JSON导入字卡</button>
+  <button class="btn btn-outline btn-smaller" id="btnExportCards">📤 导出此分组字卡</button>
+
+  <hr>
+  <label>查看 / 管理分组字卡</label>
+  <select id="groupSelect">${groups.map(g=>`<option value="${g.id}">${escHtml(g.name||'未命名')}</option>`).join('')}</select>
+  <div id="cardsPreview" style="max-height:150px;overflow-y:auto;margin-top:6px;"></div>
+  <button class="btn btn-danger btn-smaller" id="btnClearGroupCards">清空此分组字卡</button>
+
+  <hr>
+  <h3 style="font-size:15px;">👋 拍一拍</h3>
+  <p style="font-size:12px;color:#999;text-align:center;">设置对方拍一拍的内容，与字卡一样随机回复</p>
+  <div id="patListContainer"></div>
+  <div style="display:flex;gap:4px;margin-top:6px;">
+    <input type="text" id="patName" placeholder="对方名(悟)" style="flex:1;min-width:0;">
+    <input type="text" id="patAction" placeholder="动作(拍了拍)" style="flex:1;min-width:0;">
+    <input type="text" id="patTarget" placeholder="对象(我)" style="flex:1;min-width:0;">
+  </div>
+  <button class="btn btn-primary btn-smaller" id="btnAddPat" style="margin-top:6px;">+ 添加拍一拍</button>
+
+  <hr>
+  <h3 style="font-size:15px;">🖼 对方表情包库</h3>
+  <div class="sticker-grid" id="otherStickerGrid"></div>
+  <button class="btn btn-smaller btn-outline" id="btnAddOtherSticker">📷 导入表情</button>
+  <button class="btn btn-smaller btn-danger" id="btnClearOtherStickers">清空</button>
+  `;
+  openPanel(html);
+  bindWordCardEvents(groups);
+}
+
+async function bindWordCardEvents(groups){
+  document.getElementById('btnCreateGroup')?.addEventListener('click',async()=>{
+    const name=document.getElementById('newGroupName').value.trim();
+    if(!name) return;
+    await dbPut('wordCardGroups',{name,cards:[]});
+    closePanel(); openWordCardsPanel();
+  });
+
+  document.querySelectorAll('.group-toggle').forEach(btn=>{
+    btn.onclick=async()=>{
+      const gid=+btn.dataset.gid;
+      let ids=state.activeWordCardGroupIds||[];
+      if(ids.includes(gid)) ids=ids.filter(x=>x!==gid);
+      else ids.push(gid);
+      state.activeWordCardGroupIds=ids;
+      await saveSetting('activeWordCardGroupIds',ids);
+      closePanel(); openWordCardsPanel();
+    };
+  });
+
+  document.querySelectorAll('.delGroupBtn').forEach(btn=>{
+    btn.onclick=async()=>{
+      const gid=+btn.dataset.gid;
+      if(!confirm('确定删除此字卡分组？')) return;
+      await dbDelete('wordCardGroups',gid);
+      state.activeWordCardGroupIds=(state.activeWordCardGroupIds||[]).filter(x=>x!==gid);
+      await saveSetting('activeWordCardGroupIds',state.activeWordCardGroupIds);
+      closePanel(); openWordCardsPanel();
+    };
+  });
+
+  document.getElementById('btnBatchImport')?.addEventListener('click',async()=>{
+    const sel=document.getElementById('importTargetGroup');
+    if(!sel||!sel.value){ alert('请先创建分组'); return; }
+    const gid=+sel.value;
+    const raw=document.getElementById('batchCardsInput').value;
+    const lines=raw.split(/[\n\r]+/).map(l=>l.trim()).filter(l=>l);
+    if(!lines.length){ alert('请输入内容'); return; }
+    const group=await dbGet('wordCardGroups',gid);
+    if(!group) return;
+    const set=new Set(group.cards||[]);
+    let added=0;
+    lines.forEach(l=>{ if(!set.has(l)){ set.add(l); added++; } });
+    group.cards=[...set];
+    await dbPut('wordCardGroups',group);
+    alert(`导入完成！新增 ${added} 条，跳过 ${lines.length-added} 条重复。`);
+    closePanel(); openWordCardsPanel();
+  });
+
+  document.getElementById('btnJsonImport')?.addEventListener('click',()=>{
+    hiddenJsonInput.click();
+  });
+
+  document.getElementById('btnExportCards')?.addEventListener('click',async()=>{
+    const sel=document.getElementById('importTargetGroup');
+    if(!sel||!sel.value){ alert('请先创建分组'); return; }
+    const gid=+sel.value;
+    const group=await dbGet('wordCardGroups',gid);
+    if(!group) return;
+    const blob=new Blob([JSON.stringify({name:group.name,cards:group.cards||[]},null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`wordcards_${(group.name||'group')}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  const groupSelect=document.getElementById('groupSelect');
+  const previewDiv=document.getElementById('cardsPreview');
+  const renderCards=async()=>{
+    if(!groupSelect||!groupSelect.value){ previewDiv.innerHTML=''; return; }
+    const gid=+groupSelect.value;
+    const group=await dbGet('wordCardGroups',gid);
+    if(group&&group.cards&&group.cards.length){
+      previewDiv.innerHTML=group.cards.map((c,i)=>
+        `<div class="wordcard-item"><span style="flex:1;word-break:break-all;">${escHtml(c)}</span><button class="btn btn-smaller btn-danger delCardBtn" data-gid="${gid}" data-idx="${i}">×</button></div>`
+      ).join('');
+      previewDiv.querySelectorAll('.delCardBtn').forEach(b=>{
+        b.onclick=async()=>{
+          const g=+b.dataset.gid, i=+b.dataset.idx;
+          const grp=await dbGet('wordCardGroups',g);
+          if(grp){ grp.cards.splice(i,1); await dbPut('wordCardGroups',grp); renderCards(); }
+        };
+      });
+    }else{
+      previewDiv.innerHTML='<p style="color:#999;font-size:12px;">暂无字卡</p>';
+    }
+  };
+  if(groupSelect){ groupSelect.onchange=renderCards; renderCards(); }
+  document.getElementById('btnClearGroupCards')?.addEventListener('click',async()=>{
+    if(!groupSelect||!groupSelect.value) return;
+    if(!confirm('确定清空此分组的所有字卡？')) return;
+    const gid=+groupSelect.value;
+    const grp=await dbGet('wordCardGroups',gid);
+    if(grp){ grp.cards=[]; await dbPut('wordCardGroups',grp); renderCards(); }
+  });
+
+  const patContainer=document.getElementById('patListContainer');
+  const renderPats=()=>{
+    const list=state.patList||[];
+    if(!list.length){
+      patContainer.innerHTML='<p style="color:#999;font-size:12px;text-align:center;">暂无拍一拍内容</p>';
+      return;
+    }
+    patContainer.innerHTML=list.map((p,i)=>
+      `<div class="pat-item"><span class="pat-text">${escHtml([p.name,p.action,p.target].filter(Boolean).join(' '))}</span><button class="btn btn-smaller btn-danger delPatBtn" data-idx="${i}">×</button></div>`
+    ).join('');
+    patContainer.querySelectorAll('.delPatBtn').forEach(b=>{
+      b.onclick=async()=>{
+        const i=+b.dataset.idx;
+        state.patList.splice(i,1);
+        await saveSetting('patList',state.patList);
+        renderPats();
+      };
+    });
+  };
+  renderPats();
+  document.getElementById('btnAddPat')?.addEventListener('click',async()=>{
+    const n=document.getElementById('patName').value.trim();
+    const a=document.getElementById('patAction').value.trim()||'拍了拍';
+    const t=document.getElementById('patTarget').value.trim()||'我';
+    if(!n&&!a&&!t){ alert('请至少填写一个字段'); return; }
+    state.patList.push({name:n||'悟',action:a,target:t});
+    await saveSetting('patList',state.patList);
+    document.getElementById('patName').value='';
+    document.getElementById('patAction').value='';
+    document.getElementById('patTarget').value='';
+    renderPats();
+  });
+
+  const otherGrid=document.getElementById('otherStickerGrid');
+  const renderOtherStickers=async()=>{
+    const stickers=await dbGetAll('otherStickers');
+    otherGrid.innerHTML=stickers.map(s=>
+      `<img src="${s.dataUrl}" class="other-sticker-item" data-id="${s.id}">`
+    ).join('')+`<div class="add-sticker-btn" id="addOtherStickerBtn">+</div>`;
+    otherGrid.querySelectorAll('.other-sticker-item').forEach(img=>{
+      img.onclick=async()=>{
+        if(confirm('删除此表情？')){ await dbDelete('otherStickers',+img.dataset.id); renderOtherStickers(); }
+      };
+    });
+    document.getElementById('addOtherStickerBtn').onclick=()=>{
+      emojiCallback=async(urls)=>{
+        for(const u of urls){ await dbPut('otherStickers',{dataUrl:u}); }
+        renderOtherStickers();
+      };
+      hiddenEmojiInput.click();
+    };
+  };
+  renderOtherStickers();
+  document.getElementById('btnAddOtherSticker')?.addEventListener('click',()=>{
+    emojiCallback=async(urls)=>{
+      for(const u of urls){ await dbPut('otherStickers',{dataUrl:u}); }
+      renderOtherStickers();
+    };
+    hiddenEmojiInput.click();
+  });
+  document.getElementById('btnClearOtherStickers')?.addEventListener('click',async()=>{
+    if(confirm('清空对方表情包库？')){ await dbClear('otherStickers'); renderOtherStickers(); }
+  });
+}
+
+/* ---------- 我的表情包面板 ---------- */
+async function openEmojiPanel(){
+  const stickers=await dbGetAll('userStickers');
+  let grid=stickers.map(s=>`<img src="${s.dataUrl}" class="user-sticker-item" data-url="${s.dataUrl}">`).join('');
+  grid+=`<div class="add-sticker-btn" id="addUserStickerBtn">+</div>`;
+  const html=`
+  <button class="close-btn">✕</button>
+  <h3>😊 我的表情包</h3>
+  <div class="sticker-grid" id="userStickerGrid">${grid}</div>
+  <button class="btn btn-smaller btn-danger" id="btnClearUserStickers">清空表情包</button>
+  `;
+  openPanel(html);
+  document.querySelectorAll('.user-sticker-item').forEach(img=>{
+    img.onclick=async()=>{
+      await sendSticker(img.dataset.url);
+      closePanel();
+    };
+  });
+  const addBtn=document.getElementById('addUserStickerBtn');
+  if(addBtn){
+    addBtn.onclick=()=>{
+      emojiCallback=async(urls)=>{
+        for(const u of urls){ await dbPut('userStickers',{dataUrl:u}); }
+        closePanel(); openEmojiPanel();
+      };
+      hiddenEmojiInput.click();
+    };
+  }
+  const clearBtn=document.getElementById('btnClearUserStickers');
+  if(clearBtn){
+    clearBtn.onclick=async()=>{
+      if(confirm('确定清空所有表情包？')){ await dbClear('userStickers'); closePanel(); openEmojiPanel(); }
+    };
+  }
+}
+
+/* ================= Send ================= */
+async function sendSticker(url){
+  const quoteId=state.quoteMsgId||null;
+  const quotePrev=quoteId?await getQuotePreview(quoteId):null;
+  const msg=await addMessage('me',url,'sticker',quoteId,quotePrev);
+  state.quoteMsgId=null; quoteBar.style.display='none';
+  handleUserMessage(msg);
+}
+
+async function sendMessage(){
+  const content=msgInput.value.trim();
+  if(!content) return;
+  msgInput.value=''; msgInput.style.height='auto';
+  const quoteId=state.quoteMsgId||null;
+  const quotePrev=quoteId?await getQuotePreview(quoteId):null;
+  const msg=await addMessage('me',content,'text',quoteId,quotePrev);
+  state.quoteMsgId=null; quoteBar.style.display='none';
+  handleUserMessage(msg);
+}
+
+/* ================= Export / Import ================= */
+async function exportAll(){
+  const data={
+    settings:await dbGetAll('settings'),
+    messages:await dbGetAll('messages'),
+    wordCardGroups:await dbGetAll('wordCardGroups'),
+    userStickers:await dbGetAll('userStickers'),
+    otherStickers:await dbGetAll('otherStickers'),
+    diaries:await dbGetAll('diaries'),
+    surveys:await dbGetAll('surveys'),
+    exportTime:new Date().toISOString()
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`LoveSatoru_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function importAll(jsonText){
+  try{
+    const data=JSON.parse(jsonText);
+    if(!confirm('导入将覆盖当前所有数据，确定继续？')) return;
+    await dbClear('settings'); await dbClear('messages');
+    await dbClear('wordCardGroups'); await dbClear('userStickers'); await dbClear('otherStickers');
+    await dbClear('diaries'); await dbClear('surveys');
+    for(const s of (data.settings||[])) await dbPut('settings',s);
+    for(const m of (data.messages||[])) await dbPut('messages',m);
+    for(const g of (data.wordCardGroups||[])) await dbPut('wordCardGroups',g);
+    for(const s of (data.userStickers||[])) await dbPut('userStickers',s);
+    for(const s of (data.otherStickers||[])) await dbPut('otherStickers',s);
+    for(const d of (data.diaries||[])) await dbPut('diaries',d);
+    for(const s of (data.surveys||[])) await dbPut('surveys',s);
+    state.bgImage=null; state.otherAvatar=null; state.myAvatar=null;
+    state.activeWordCardGroupIds=[]; state.patList=[];
+    await loadSettings(); await loadMessages(); updateOtherUI();
+    closePanel();
+    alert('数据导入成功！');
+  }catch(e){
+    alert('导入失败：'+e.message);
+  }
+}
+
+/* ================= UI Update ================= */
+function updateOtherUI(){
+  if(state.otherAvatar&&String(state.otherAvatar).startsWith('data:')) otherAvatarImg.src=state.otherAvatar;
+  otherNameEl.textContent=state.otherName||'Satoru';
+  otherStatusEl.textContent=state.otherStatus||'在线';
+}
+
+/* ============================================================
+   红包 / 转账（修复领取 + 系统通知）
+   ============================================================ */
+
+function buildRpCard(msg){
+  const m=msg.meta||{};
+  const isTransfer=msg.type==='transfer';
+  const div=document.createElement('div');
+  div.className='rp-card'+(isTransfer?' transfer':'')+(m.status!=='pending'?' resolved':'');
+  const stText=m.status==='pending'?'待领取':(m.status==='accepted'?'已领取':'已退回');
+  div.innerHTML=`
+    <div class="rp-icon">${isTransfer?'💸':'🧧'}</div>
+    <div class="rp-info">
+      <div class="rp-note">${escHtml(m.note||(isTransfer?'转账':'恭喜发财'))}</div>
+      <div class="rp-amount">¥${Number(m.amount||0).toFixed(2)}</div>
+    </div>
+    <div class="rp-status">${stText}</div>
+  `;
+  div.onclick=(e)=>{
+    e.stopPropagation();
+    // 已处理过、自己发的、非 pending 状态 → 不弹窗
+    if(div.classList.contains('resolved')) return;
+    if(!m||m.status!=='pending') return;
+    if(msg.sender==='me') return;
+    showRpDialog(msg);
+  };
+  return div;
+}
+
+function showRpDialog(msg){
+  const m=msg.meta||{};
+  overlayContainer.innerHTML='';
+  const overlay=document.createElement('div');
+  overlay.className='overlay';
+  const panel=document.createElement('div');
+  panel.className='panel';
+  panel.style.maxHeight='auto';
+  panel.innerHTML=`
+    <button class="close-btn" id="rpClose">✕</button>
+    <h3>${msg.type==='transfer'?'💸 转账':'🧧 红包'}</h3>
+    <p style="text-align:center;font-size:13px;color:#888;margin-top:8px;">${escHtml(m.note||'')}</p>
+    <p style="text-align:center;font-size:28px;font-weight:700;color:#ff6a00;margin:12px 0;">¥${Number(m.amount).toFixed(2)}</p>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;">
+      <button class="btn btn-primary" id="rpAccept">领取</button>
+      <button class="btn btn-outline" id="rpReturn">退回</button>
+    </div>
+  `;
+  overlay.appendChild(panel);
+  overlay.addEventListener('click',(e)=>{ if(e.target===overlay) overlay.remove(); });
+  panel.querySelector('#rpClose').onclick=()=>overlay.remove();
+  panel.querySelector('#rpAccept').onclick=async()=>{
+    overlay.remove();
+    await resolveRp(msg.id,'accepted','me');
+  };
+  panel.querySelector('#rpReturn').onclick=async()=>{
+    overlay.remove();
+    await resolveRp(msg.id,'returned','me');
+  };
+  overlayContainer.appendChild(overlay);
+}
+
+/**
+ * 处理领取/退回
+ * @param msgId 消息ID
+ * @param action 'accepted' | 'returned'
+ * @param actor 'me' | 'other' —— 执行操作的一方（决定系统提示显示在哪一侧）
+ */
+async function resolveRp(msgId,action,actor){
+  const all=await dbGetAll('messages');
+  const found=all.find(x=>x.id===msgId);
+  if(!found||!found.meta||found.meta.status!=='pending') return;
+
+  found.meta.status=action;
+  found.meta.resolvedAt=Date.now();
+  const shouldNotify=!found.meta.notified;
+  if(shouldNotify) found.meta.notified=true;
+  await dbPut('messages',found);
+
+  updateRpCardDOM(msgId,action);
+
+  // 插入一条居中的系统提示消息，双方都能看到
+  if(shouldNotify){
+    const typeLabel=found.type==='transfer'?'转账':'红包';
+    const amountTxt=Number(found.meta.amount).toFixed(2);
+    const actionTxt=action==='accepted'?'已领取':'已退回';
+    const icon=action==='accepted'?'✅':'↩️';
+    const sysSender=(actor==='me')?'me':'other';
+    await addMessage(sysSender, `${icon} ${typeLabel}${actionTxt} ¥${amountTxt}`, 'system');
+  }
+}
+
+function updateRpCardDOM(msgId,status){
+  const row=chatArea.querySelector(`[data-msg-id="${msgId}"]`);
+  if(!row) return;
+  const card=row.querySelector('.rp-card');
+  if(!card) return;
+  card.classList.toggle('resolved',status!=='pending');
+  const st=card.querySelector('.rp-status');
+  if(st) st.textContent=status==='accepted'?'已领取':'已退回';
+}
+
+function scheduleRpAutoResolve(msgId,at){
+  setTimeout(async()=>{
+    const action=Math.random()<0.8?'accepted':'returned';
+    await resolveRp(msgId,action,'other');
+  },Math.max(0,at-Date.now()));
+}
+
+async function checkPendingRps(){
+  const all=await dbGetAll('messages');
+  for(const m of all){
+    if(m.sender==='me'&&m.meta&&m.meta.status==='pending'
+       &&m.meta.autoResolveAt&&Date.now()>=m.meta.autoResolveAt){
+      const action=Math.random()<0.8?'accepted':'returned';
+      await resolveRp(m.id,action,'other');
+    }
+  }
+}
+
+async function sendRpFromOther(){
+  const pool=await buildReplyPool();
+  const texts=pool.filter(p=>p.type==='text').map(p=>p.content);
+  const note=texts.length?texts[Math.floor(Math.random()*texts.length)]:'恭喜发财';
+  const isTransfer=Math.random()<0.4;
+  const amount=isTransfer
+    ? +(Math.random()*500+1).toFixed(2)
+    : +(Math.random()*100+1).toFixed(2);
+  const msg={
+    sender:'other',
+    type:isTransfer?'transfer':'redpacket',
+    content:'',
+    timestamp:Date.now(),
+    meta:{amount,note,status:'pending',resolvedAt:null}
+  };
+  const id=await dbPut('messages',msg);
+  msg.id=id;
+  appendMsgToDOM(msg,true);
+  scrollToBottom();
+}
+
+function openRpCreatePanel(){
+  let rpType='redpacket';
+  const html=`
+    <button class="close-btn">✕</button>
+    <h3>🧧 发红包 / 转账</h3>
+    <div class="chip-row" style="justify-content:center;margin-bottom:12px;">
+      <span class="chip active" data-rptype="redpacket">🧧 红包</span>
+      <span class="chip" data-rptype="transfer">💸 转账</span>
+    </div>
+    <label>金额（元）</label>
+    <input type="number" id="rpAmountInput" min="0.01" step="0.01" placeholder="0.00">
+    <label>备注</label>
+    <input type="text" id="rpNoteInput" placeholder="写点什么吧...">
+    <div style="text-align:center;margin-top:18px;">
+      <button class="btn btn-primary" id="rpSendBtn">发送</button>
+    </div>
+  `;
+  openPanel(html);
+  document.querySelectorAll('[data-rptype]').forEach(chip=>{
+    chip.onclick=()=>{
+      document.querySelectorAll('[data-rptype]').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      rpType=chip.dataset.rptype;
+    };
+  });
+  document.getElementById('rpSendBtn').onclick=async()=>{
+    const amount=parseFloat(document.getElementById('rpAmountInput').value);
+    if(!amount||amount<=0){ alert('请输入有效金额'); return; }
+    const note=document.getElementById('rpNoteInput').value.trim()
+      || (rpType==='redpacket'?'恭喜发财，大吉大利':'转账');
+    const autoResolveAt=Date.now()+3000+Math.random()*12000;
+    const msg={
+      sender:'me',
+      type:rpType,
+      content:'',
+      timestamp:Date.now(),
+      status:'sent',
+      meta:{amount:+amount.toFixed(2),note,status:'pending',autoResolveAt,resolvedAt:null}
+    };
+    const id=await dbPut('messages',msg);
+    msg.id=id;
+    appendMsgToDOM(msg,true);
+    scrollToBottom();
+    closePanel();
+    scheduleRpAutoResolve(id,autoResolveAt);
+    handleUserMessage(msg);
+  };
+}
+
+/* ============================================================
+   问卷
+   ============================================================ */
+
+function buildSurveyCard(msg){
+  const div=document.createElement('div');
+  div.className='survey-card';
+  div.dataset.surveyId=msg.meta.surveyId;
+  div.innerHTML='<div class="sv-title">📋 加载中...</div>';
+  div.onclick=(e)=>{
+    e.stopPropagation();
+    openSurveyResult(msg.meta.surveyId);
+  };
+  (async()=>{
+    const s=await dbGet('surveys',msg.meta.surveyId);
+    if(s) updateSurveyCard(div,s);
+  })();
+  return div;
+}
+
+function updateSurveyCard(card,s){
+  const remain=Math.max(0,Math.floor((s.deadline-Date.now())/1000));
+  const mm=String(Math.floor(remain/60)).padStart(2,'0');
+  const ss=String(remain%60).padStart(2,'0');
+  let statusHtml;
+  if(remain>0){
+    const hint=s.status==='answered'?'（对方已作答）':'';
+    statusHtml=`<div class="sv-countdown">⏳ ${mm}:${ss} ${hint}</div>`;
+  }else{
+    statusHtml=`<div class="sv-status">✅ 已结束 · 点击查看结果</div>`;
+  }
+  card.innerHTML=`
+    <div class="sv-title">📋 ${escHtml(s.title)}</div>
+    <div class="sv-sub">共 ${s.questions.length} 题</div>
+    ${statusHtml}
+  `;
+}
+
+async function tickSurveys(){
+  const cards=chatArea.querySelectorAll('.survey-card');
+  if(!cards.length) return;
+  const allSurveys=await dbGetAll('surveys');
+  const map={};
+  allSurveys.forEach(s=>map[s.id]=s);
+  for(const card of cards){
+    const s=map[+card.dataset.surveyId];
+    if(!s) continue;
+    if(s.status==='pending'&&Date.now()>=s.deadline){
+      s.answers=s.questions.map(q=>Math.floor(Math.random()*q.options.length));
+      s.status='expired';
+      s.answeredAt=Date.now();
+      await dbPut('surveys',s);
+    }
+    updateSurveyCard(card,s);
+  }
+}
+
+async function openSurveyResult(surveyId){
+  const s=await dbGet('surveys',surveyId);
+  if(!s) return;
+  let html=`<button class="close-btn">✕</button><h3>📋 ${escHtml(s.title)}</h3>`;
+  const remain=Math.max(0,Math.floor((s.deadline-Date.now())/1000));
+  if(remain>0){
+    html+=`<p style="text-align:center;color:#888;font-size:13px;margin-bottom:12px;">倒计时中... ${Math.floor(remain/60)}:${String(remain%60).padStart(2,'0')}</p>`;
+  }
+  if(s.status==='pending'&&remain>0){
+    html+=`<p style="text-align:center;color:#888;">等待对方作答...</p>`;
+  }else{
+    s.questions.forEach((q,qi)=>{
+      html+=`<div style="margin-bottom:14px;">
+        <div style="font-weight:600;font-size:14px;margin-bottom:6px;">${qi+1}. ${escHtml(q.title)}</div>`;
+      const ans=s.answers[qi];
+      q.options.forEach((o,oi)=>{
+        const isAns=oi===ans;
+        html+=`<div style="padding:8px 12px;border-radius:8px;margin:4px 0;font-size:13px;
+          background:${isAns?'#e8f2fc':'#f9f9f9'};
+          border:1.5px solid ${isAns?'var(--accent)':'transparent'};
+          ${isAns?'font-weight:600;color:var(--accent);':''}">
+          ${isAns?'✔ ':''}${escHtml(o)}
+        </div>`;
+      });
+      html+=`</div>`;
+    });
+  }
+  openPanel(html);
+}
+
+function scheduleSurveyAnswer(surveyId){
+  if(scheduledSurveys.has(surveyId)) return;
+  scheduledSurveys.add(surveyId);
+  const delay=8000+Math.random()*4*60*1000;
+  setTimeout(async()=>{
+    scheduledSurveys.delete(surveyId);
+    const s=await dbGet('surveys',surveyId);
+    if(!s||s.status!=='pending') return;
+    if(Date.now()>=s.deadline) return;
+    s.answers=s.questions.map(q=>Math.floor(Math.random()*q.options.length));
+    s.status='answered';
+    s.answeredAt=Date.now();
+    await dbPut('surveys',s);
+    tickSurveys();
+  },delay);
+}
+
+async function schedulePendingSurveys(){
+  const surveys=await dbGetAll('surveys');
+  for(const s of surveys){
+    if(s.status==='pending'&&Date.now()<s.deadline){
+      scheduleSurveyAnswer(s.id);
+    }
+  }
+}
+
+function openSurveyCenterPanel(){
+  const html=`
+    <button class="close-btn">✕</button>
+    <h3>📋 问卷</h3>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="btnCreateSurvey">✏️ 创建问卷</button>
+      <button class="btn btn-outline" id="btnSurveyRecords">📂 问卷记录</button>
+    </div>
+    <p style="text-align:center;font-size:12px;color:#999;">发送后对方有 5 分钟作答时间</p>
+  `;
+  openPanel(html);
+  document.getElementById('btnCreateSurvey').onclick=()=>openSurveyCreatePanel();
+  document.getElementById('btnSurveyRecords').onclick=()=>openSurveyRecordsPanel();
+}
+
+function openSurveyCreatePanel(){
+  let draft=[{title:'',options:['','']}];
+
+  function renderForm(){
+    const html=`
+      <button class="close-btn">✕</button>
+      <h3>✏️ 创建问卷</h3>
+      <label>问卷标题</label>
+      <input type="text" id="surveyTitleInput" placeholder="输入问卷标题">
+      <div id="qList" style="margin-top:10px;"></div>
+      <button class="btn btn-outline btn-smaller" id="addQuestion" style="margin-top:6px;">+ 添加问题</button>
+      <div style="text-align:center;margin-top:16px;">
+        <button class="btn btn-primary" id="sendSurveyBtn">📤 发送问卷（5分钟作答）</button>
+      </div>
+    `;
+    openPanel(html);
+    renderQuestions();
+    document.getElementById('addQuestion').onclick=()=>{
+      draft.push({title:'',options:['','']});
+      renderQuestions();
+    };
+    document.getElementById('sendSurveyBtn').onclick=sendSurvey;
+  }
+
+  function renderQuestions(){
+    const qList=document.getElementById('qList');
+    if(!qList) return;
+    qList.innerHTML=draft.map((q,qi)=>`
+      <div style="background:#f9f9f9;border-radius:12px;padding:10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:13px;font-weight:600;">问题 ${qi+1}</span>
+          ${draft.length>1?`<button class="btn btn-smaller btn-danger" data-delq="${qi}" style="margin:0;">删除</button>`:''}
+        </div>
+        <input type="text" class="q-title" data-qi="${qi}" value="${escHtml(q.title)}" placeholder="输入问题内容" style="margin-bottom:6px;">
+        ${q.options.map((o,oi)=>`
+          <div style="display:flex;gap:6px;align-items:center;margin:4px 0;">
+            <input type="text" class="q-option" data-qi="${qi}" data-oi="${oi}" value="${escHtml(o)}" placeholder="选项 ${oi+1}">
+            ${q.options.length>2?`<button class="btn btn-smaller btn-danger" data-delopt="${qi},${oi}" style="margin:0;padding:4px 10px;">×</button>`:''}
+          </div>
+        `).join('')}
+        <button class="btn btn-outline btn-smaller" data-addopt="${qi}" style="margin-top:4px;">+ 选项</button>
+      </div>
+    `).join('');
+
+    qList.querySelectorAll('.q-title').forEach(inp=>{
+      inp.oninput=()=>{ draft[+inp.dataset.qi].title=inp.value; };
+    });
+    qList.querySelectorAll('.q-option').forEach(inp=>{
+      inp.oninput=()=>{ draft[+inp.dataset.qi].options[+inp.dataset.oi]=inp.value; };
+    });
+    qList.querySelectorAll('[data-delq]').forEach(btn=>{
+      btn.onclick=()=>{ draft.splice(+btn.dataset.delq,1); renderQuestions(); };
+    });
+    qList.querySelectorAll('[data-addopt]').forEach(btn=>{
+      btn.onclick=()=>{ draft[+btn.dataset.addopt].options.push(''); renderQuestions(); };
+    });
+    qList.querySelectorAll('[data-delopt]').forEach(btn=>{
+      btn.onclick=()=>{
+        const [qi,oi]=btn.dataset.delopt.split(',').map(Number);
+        draft[qi].options.splice(oi,1);
+        renderQuestions();
+      };
+    });
+  }
+
+  async function sendSurvey(){
+    const titleEl=document.getElementById('surveyTitleInput');
+    const title=((titleEl&&titleEl.value)||'').trim()||'未命名问卷';
+    const validQs=[];
+    for(const q of draft){
+      const t=(q.title||'').trim();
+      const opts=q.options.map(o=>(o||'').trim()).filter(o=>o);
+      if(!t) continue;
+      if(opts.length<2){ alert(`问题「${t}」至少需要2个选项`); return; }
+      validQs.push({title:t,options:opts});
+    }
+    if(!validQs.length){ alert('请至少填写一个完整的问题'); return; }
+
+    const survey={
+      title,
+      questions:validQs,
+      createdAt:Date.now(),
+      deadline:Date.now()+5*60*1000,
+      status:'pending',
+      answers:[]
+    };
+    const sid=await dbPut('surveys',survey);
+    survey.id=sid;
+
+    const msg={
+      sender:'me',
+      type:'survey',
+      content:title,
+      timestamp:Date.now(),
+      status:'sent',
+      meta:{surveyId:sid}
+    };
+    const mid=await dbPut('messages',msg);
+    msg.id=mid;
+    appendMsgToDOM(msg,true);
+    scrollToBottom();
+
+    scheduleSurveyAnswer(sid);
+    closePanel();
+  }
+
+  renderForm();
+}
+
+async function openSurveyRecordsPanel(){
+  const surveys=await dbGetAll('surveys');
+  surveys.sort((a,b)=>b.createdAt-a.createdAt);
+  let html=`<button class="close-btn">✕</button><h3>📂 问卷记录</h3>`;
+  if(!surveys.length){
+    html+=`<p style="text-align:center;color:#888;padding:20px 0;">暂无问卷记录</p>`;
+  }else{
+    html+=surveys.map(s=>{
+      const remain=Math.max(0,Math.floor((s.deadline-Date.now())/1000));
+      let statusText;
+      if(remain>0) statusText=`⏳ 进行中 ${Math.floor(remain/60)}:${String(remain%60).padStart(2,'0')}`;
+      else statusText='✅ 已结束';
+      return `<div class="wordcard-item" style="cursor:pointer;align-items:flex-start;" data-sid="${s.id}">
+        <span style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:14px;">${escHtml(s.title)}</div>
+          <div style="font-size:11px;color:#999;margin-top:2px;">${statusText} · ${s.questions.length}题 · ${formatTime(s.createdAt)}</div>
+        </span>
+        <button class="btn btn-smaller btn-danger" data-delsid="${s.id}" style="margin:0;">删</button>
+      </div>`;
+    }).join('');
+  }
+  openPanel(html);
+  document.querySelectorAll('[data-sid]').forEach(el=>{
+    el.onclick=(e)=>{
+      if(e.target.dataset.delsid) return;
+      openSurveyResult(+el.dataset.sid);
+    };
+  });
+  document.querySelectorAll('[data-delsid]').forEach(btn=>{
+    btn.onclick=async(e)=>{
+      e.stopPropagation();
+      if(!confirm('删除此问卷记录？')) return;
+      await dbDelete('surveys',+btn.dataset.delsid);
+      openSurveyRecordsPanel();
+    };
+  });
+}
+
+/* ============================================================
+   日记
+   ============================================================ */
+
+async function openDiaryPanel(){
+  const diaries=await dbGetAll('diaries');
+  const mine=diaries.filter(d=>d.owner==='me').sort((a,b)=>b.timestamp-a.timestamp);
+  const theirs=diaries.filter(d=>d.owner==='other').sort((a,b)=>b.timestamp-a.timestamp);
+
+  const html=`
+    <button class="close-btn">✕</button>
+    <h3>📖 日记本</h3>
+    <div class="chip-row" id="diaryTabs" style="justify-content:center;margin-bottom:12px;">
+      <span class="chip active" data-tab="me">我的日记</span>
+      <span class="chip" data-tab="other">TA的日记</span>
+    </div>
+    <div id="diaryContent"></div>
+  `;
+  openPanel(html);
+
+  function renderDiaryList(list,containerId,deletable){
+    const el=document.getElementById(containerId);
+    if(!el) return;
+    if(!list.length){
+      el.innerHTML=`<p style="color:#999;text-align:center;font-size:13px;padding:20px 0;">还没有日记</p>`;
+      return;
+    }
+    el.innerHTML=list.map(d=>`
+      <div class="diary-item">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:12px;color:#999;">${formatTime(d.timestamp)}</span>
+          ${deletable?`<button class="btn btn-smaller btn-danger" data-deldiary="${d.id}" style="margin:0;padding:3px 10px;">×</button>`:''}
+        </div>
+        <div class="diary-content">${escHtml(d.content)}</div>
+      </div>
+    `).join('');
+    el.querySelectorAll('[data-deldiary]').forEach(btn=>{
+      btn.onclick=async()=>{
+        if(!confirm('删除这篇日记？')) return;
+        await dbDelete('diaries',+btn.dataset.deldiary);
+        openDiaryPanel();
+      };
+    });
+  }
+
+  function renderTab(tab){
+    const content=document.getElementById('diaryContent');
+    if(!content) return;
+    if(tab==='me'){
+      content.innerHTML=`
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+          <span style="font-weight:600;font-size:14px;">${escHtml(state.myDiaryBookName||'我的日记本')}</span>
+          <button class="btn btn-smaller btn-outline" id="renameMyBook">🎲 改名</button>
+          <button class="btn btn-smaller btn-primary" id="writeDiary">✍️ 写日记</button>
+        </div>
+        <div id="myDiaryList"></div>
+      `;
+      renderDiaryList(mine,'myDiaryList',true);
+      document.getElementById('renameMyBook').onclick=async()=>{
+        const names=['晚风手札','月光笔记','星星日记','雨后小记','温柔日常','心动记录','时光碎片','橘子汽水','夜航日志','云边小记','雾中书信'];
+        const n=names[Math.floor(Math.random()*names.length)];
+        state.myDiaryBookName=n;
+        await saveSetting('myDiaryBookName',n);
+        renderTab('me');
+      };
+      document.getElementById('writeDiary').onclick=()=>openWriteDiaryPanel();
+    }else{
+      content.innerHTML=`
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+          <span style="font-weight:600;font-size:14px;">${escHtml(state.otherDiaryBookName||'TA的日记本')}</span>
+          <button class="btn btn-smaller btn-outline" id="renameOtherBook">🎲 改名</button>
+        </div>
+        <p style="font-size:11px;color:#aaa;text-align:center;margin-bottom:8px;">对方会用字卡内容随机拼凑日记（0~3天一篇）</p>
+        <div id="otherDiaryList"></div>
+      `;
+      renderDiaryList(theirs,'otherDiaryList',false);
+      document.getElementById('renameOtherBook').onclick=async()=>{
+        const names=['月光笔记','星星手记','秘密花园','深夜电台','心动日记','微光札记','云上信笺','时光沙漏','甜梦小筑'];
+        const n=names[Math.floor(Math.random()*names.length)];
+        state.otherDiaryBookName=n;
+        await saveSetting('otherDiaryBookName',n);
+        renderTab('other');
+      };
+    }
+  }
+
+  document.querySelectorAll('#diaryTabs .chip').forEach(chip=>{
+    chip.onclick=()=>{
+      document.querySelectorAll('#diaryTabs .chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      renderTab(chip.dataset.tab);
+    };
+  });
+
+  renderTab('me');
+}
+
+function openWriteDiaryPanel(){
+  const html=`
+    <button class="close-btn">✕</button>
+    <h3>✍️ 写日记</h3>
+    <textarea id="diaryText" placeholder="今天想说点什么..." style="min-height:150px;"></textarea>
+    <div style="text-align:center;margin-top:12px;">
+      <button class="btn btn-primary" id="saveDiary">保存</button>
+    </div>
+  `;
+  openPanel(html);
+  document.getElementById('saveDiary').onclick=async()=>{
+    const content=document.getElementById('diaryText').value.trim();
+    if(!content){ alert('写点什么吧~'); return; }
+    await dbPut('diaries',{owner:'me',content,timestamp:Date.now()});
+    openDiaryPanel();
+  };
+}
+
+async function initOtherDiary(){
+  if(!state.nextOtherDiaryAt){
+    state.nextOtherDiaryAt=Date.now()+Math.random()*3*24*3600*1000;
+    await saveSetting('nextOtherDiaryAt',state.nextOtherDiaryAt);
+  }
+  await checkDiaryGen();
+}
+
+async function checkDiaryGen(){
+  const wait=(state.nextOtherDiaryAt||0)-Date.now();
+  if(wait<=0){
+    await generateOtherDiary();
+  }else{
+    if(diaryTimer) clearTimeout(diaryTimer);
+    diaryTimer=setTimeout(checkDiaryGen,Math.min(wait,2147483000));
+  }
+}
+
+async function generateOtherDiary(){
+  const pool=await buildReplyPool();
+  const texts=pool.filter(p=>p.type==='text').map(p=>p.content);
+  if(texts.length){
+    const count=3+Math.floor(Math.random()*5);
+    const parts=[];
+    for(let i=0;i<count;i++) parts.push(texts[Math.floor(Math.random()*texts.length)]);
+    const content=parts.join('，')+'。';
+    await dbPut('diaries',{owner:'other',content,timestamp:Date.now()});
+  }
+  const interval=Math.max(30000,Math.random()*3*24*3600*1000);
+  state.nextOtherDiaryAt=Date.now()+interval;
+  await saveSetting('nextOtherDiaryAt',state.nextOtherDiaryAt);
+  if(diaryTimer) clearTimeout(diaryTimer);
+  diaryTimer=setTimeout(checkDiaryGen,interval);
+}
+
+/* ============================================================
+   悬浮按钮
+   ============================================================ */
+
+document.getElementById('fabBtn').addEventListener('click',(e)=>{
+  e.stopPropagation();
+  const m=document.getElementById('fabMenu');
+  m.style.display=m.style.display==='none'?'flex':'none';
+});
+
+document.getElementById('fabMenu').addEventListener('click',(e)=>{
+  const btn=e.target.closest('button');
+  if(!btn) return;
+  document.getElementById('fabMenu').style.display='none';
+  const action=btn.dataset.action;
+  if(action==='diary') openDiaryPanel();
+  else if(action==='rp') openRpCreatePanel();
+  else if(action==='survey') openSurveyCenterPanel();
+});
+
+document.addEventListener('click',(e)=>{
+  const m=document.getElementById('fabMenu');
+  if(m&&m.style.display!=='none'&&!m.contains(e.target)){
+    m.style.display='none';
+  }
+});
+
+/* ================= Event Bindings ================= */
+btnSend.onclick=sendMessage;
+msgInput.onkeydown=(e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMessage(); } };
+msgInput.oninput=()=>{ msgInput.style.height='auto'; msgInput.style.height=Math.min(msgInput.scrollHeight,100)+'px'; };
+btnEmoji.onclick=openEmojiPanel;
+btnSettings.onclick=openSettingsPanel;
+btnWordCards.onclick=openWordCardsPanel;
+cancelQuote.onclick=()=>{ state.quoteMsgId=null; quoteBar.style.display='none'; };
+
+document.getElementById('avatarWrap').onclick=()=>{
+  fileCallback=async(url)=>{
+    state.otherAvatar=url;
+    await saveSetting('otherAvatar',url);
+    updateOtherUI();
+  };
+  hiddenFileInput.click();
+};
+document.getElementById('infoArea').onclick=openSettingsPanel;
+
+hiddenFileInput.onchange=async(e)=>{
+  const f=e.target.files[0]; if(!f) return;
+  const url=await readFileAsDataURL(f);
+  if(fileCallback){ fileCallback(url); fileCallback=null; }
+  hiddenFileInput.value='';
+};
+hiddenBgInput.onchange=async(e)=>{
+  const f=e.target.files[0]; if(!f) return;
+  const url=await readFileAsDataURL(f);
+  if(bgCallback){ bgCallback(url); bgCallback=null; }
+  hiddenBgInput.value='';
+};
+hiddenEmojiInput.onchange=async(e)=>{
+  const files=Array.from(e.target.files); if(!files.length) return;
+  const urls=[];
+  for(const f of files) urls.push(await readFileAsDataURL(f));
+  if(emojiCallback){ emojiCallback(urls); emojiCallback=null; }
+  hiddenEmojiInput.value='';
+};
+
+hiddenJsonInput.onchange=async(e)=>{
+  const f=e.target.files[0]; if(!f) return;
+  const importTarget=document.getElementById('importTargetGroup');
+
+  if(importTarget && importTarget.value){
+    const gid=+importTarget.value;
+    const group=await dbGet('wordCardGroups',gid);
+    if(!group){ alert('分组不存在'); hiddenJsonInput.value=''; return; }
+    try{
+      const text=await f.text();
+      const data=JSON.parse(text);
+      let arr=[];
+      if(Array.isArray(data)) arr=data.map(String);
+      else if(data.cards && Array.isArray(data.cards)) arr=data.cards.map(String);
+      else if(typeof data==='object') arr=Object.values(data).map(String);
+      const set=new Set(group.cards||[]);
+      let added=0;
+      arr.forEach(s=>{ const t=String(s).trim(); if(t && !set.has(t)){ set.add(t); added++; } });
+      group.cards=[...set];
+      await dbPut('wordCardGroups',group);
+      alert(`JSON导入完成！新增 ${added} 条。`);
+      closePanel(); openWordCardsPanel();
+    }catch(err){ alert('JSON解析失败：'+err.message); }
+    hiddenJsonInput.value='';
+    return;
+  }
+
+  const text=await f.text();
+  await importAll(text);
+  hiddenJsonInput.value='';
+};
+
+document.addEventListener('click',(e)=>{
+  const menu=document.querySelector('.msg-action-menu');
+  if(menu&&!menu.contains(e.target)&&!e.target.closest('.msg-row')) menu.remove();
+});
+
+window.addEventListener('popstate',()=>{
+  if(overlayContainer.innerHTML){ closePanel(); history.pushState(null,'',window.location.href); }
+});
+history.pushState(null,'',window.location.href);
+
+/* ================= Init ================= */
+(async()=>{
+  await openDB();
+  await loadSettings();
+  await loadMessages();
+  startStatusRandomizer();
+  updateOtherUI();
+  applySkin();
+  initOtherDiary();
+  setInterval(tickSurveys,1000);
+  setInterval(checkPendingRps,8000); // 每8秒补处理过期的待领取红包
+  await schedulePendingSurveys();
+  console.log('💖 LoveSatoru 已就绪');
+  console.log('   · 红包/转账领取通知已启用');
+})();
+
+})();
+</script>
+</body>
+</html>
